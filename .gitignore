@@ -1,0 +1,5 @@
+/target
+src/builtins/prog_sources/*
+.idea/
+crab-shell
+Cargo.lock

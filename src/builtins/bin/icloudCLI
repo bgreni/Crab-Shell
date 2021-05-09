@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import contextlib as __stickytape_contextlib
+
+@__stickytape_contextlib.contextmanager
+def __stickytape_temporary_dir():
+    import tempfile
+    import shutil
+    dir_path = tempfile.mkdtemp()
+    try:
+        yield dir_path
+    finally:
+        shutil.rmtree(dir_path)
+
+with __stickytape_temporary_dir() as __stickytape_working_dir:
+    def __stickytape_write_module(path, contents):
+        import os, os.path
+
+        def make_package(path):
+            parts = path.split("/")
+            partial_path = __stickytape_working_dir
+            for part in parts:
+                partial_path = os.path.join(partial_path, part)
+                if not os.path.exists(partial_path):
+                    os.mkdir(partial_path)
+                    with open(os.path.join(partial_path, "__init__.py"), "wb") as f:
+                        f.write(b"\n")
+
+        make_package(os.path.dirname(path))
+
+        full_path = os.path.join(__stickytape_working_dir, path)
+        with open(full_path, "wb") as module_file:
+            module_file.write(contents)
+
+    import sys as __stickytape_sys
+    __stickytape_sys.path.insert(0, __stickytape_working_dir)
+
+    __stickytape_write_module('functions.py', b'from pyicloud import PyiCloudService\nfrom pyicloud.services.findmyiphone import AppleDevice\nfrom webbrowser import open\n\nclass iCloudFunctions:\n    def __init__(self, email: str, password: str=None) -> None:\n        if password is None:\n            self.api = PyiCloudService(email, password)\n        else:\n            self.api = PyiCloudService(email, password)\n\n        self.funcs = {\n            "findiphone": self.find_iphone\n        }\n\n    def exec(self, func: str):\n        if self.api.requires_2sa or self.api.requires_2fa:\n            print(\'Account requires 2sa or 2fa which is not currently supported\')\n\n        self.funcs[func]()\n    \n    def find_iphone(self):\n        phones = [x for x in self.api.devices if  self.is_phone(x)]\n\n        for i in range(len(phones)):\n            print(f\'{phones[i].status()["name"]}: {i+1}\')\n\n        phone = None\n        \n        try:\n            number = int(input(\'select which device to find: \')) - 1\n            phone = phones[number]\n        except Exception:\n            print(\'Invalid choice\')\n            return\n\n        is_lost = input(\'Would you like to enable lost mode? [Y/n]: \').lower() == \'y\'\n        if is_lost:\n            number = input(\'Enter a number to call for someone who finds your phone: \')\n            phone.lost_device(number, \'Please call the number to return the device\')\n\n        do_sound = input("Would you like to play a sound from your phone? [Y/n]: ").lower() == "y"\n        if do_sound:\n            self.phone.play_sound()\n\n        loc = phone.location()\n        lat = loc[\'latitude\']\n        long = loc[\'longitude\']\n\n        maps_url = "http://www.google.com/maps/place/"\n        open(maps_url + f\'{lat}, {long}\')\n\n    def is_phone(self, device: AppleDevice):\n        stats = device.status()\n        return "iPhone" in stats[\'deviceDisplayName\']')
+    #!/usr/bin/env python3
+    
+    import begin
+    from functions import iCloudFunctions
+    from getpass import getpass
+    
+    @begin.start
+    def main(func=None):
+    
+        if func is None:
+            print("Error: function arg required")
+    
+        email = input("Please enter icloud email: ")
+        password = getpass("Please enter icloud password: ")
+    
+        functions = iCloudFunctions(email, password)
+    
+        functions.exec(func)
