@@ -23,6 +23,13 @@ cd "${PROG_SOURCE_ROOT}" || exit 1
 
 if [ ! -d "QSFactCpp" ]
 then
+  if [[ "$OSTYPE" == "darwin"* ]]
+  then
+    brew list gmp > /dev/null || (echo "installing GMP library via Homebrew" && brew install gmp > /dev/null)
+  else
+    read -rp "Do you have GMP installed? [Y/n]: " answer && [[ $answer == [yY] ]] || (echo "exiting please install GMP" && exit 1 )
+  fi
+
   echo "Cloning and Building QSFactCpp"
   git clone --quiet https://github.com/bgreni/QSFactCpp.git > /dev/null
   (cd QSFactCpp && ./build.sh > /dev/null && mv src/qsmain "${BIN}/qsmain") || (echo "${INSTALL_FAIL} QSFactCpp" && rm -r QSFactCpp && exit 1)

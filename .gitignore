@@ -3,3 +3,5 @@ src/builtins/prog_sources/*
 .idea/
 crab-shell
 Cargo.lock
+src/builtins/bin/*
+!src/builtins/bin/.keepme
